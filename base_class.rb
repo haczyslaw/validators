@@ -6,7 +6,7 @@ class BaseClass
   end
 
   def self.validates_presence_of(argument)
-    callback_name = "_#{argument}_numericality_validation_callback".to_sym
+    callback_name = "_#{argument}_presence_validation_callback".to_sym
     validation_callbacks.add(callback_name) do
       # Add validator here
     end
