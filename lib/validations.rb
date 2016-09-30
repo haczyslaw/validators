@@ -2,7 +2,6 @@ require File.expand_path("../validators/base_validator", __FILE__)
 Dir["#{__dir__}/validators/*.rb"].each { |f| require f }
 
 module Validations
-  VALIDATION_SUFFIX = "validation_callback"
 
   def self.included(base)
     base.extend(ClassMethods)
@@ -16,33 +15,27 @@ module Validations
     # I can define this methods using array and each, but this version is much more readable
 
     def validates_presence_of(argument)
-      callback_name = "_#{argument}_presence_#{VALIDATION_SUFFIX}".to_sym
-
-      validation_callbacks.add(callback_name) do
-        Validator::Presence.new(argument)
-      end
+      validation_callbacks.add(Validator::Presence.new(argument))
     end
 
     def validates_numericality_of(argument)
-      callback_name = "_#{argument}_numericality_#{VALIDATION_SUFFIX}".to_sym
-
-      validation_callbacks.add(callback_name) do
-        Validator::Numericality.new(argument)
-      end
+      validation_callbacks.add(Validator::Numericality.new(argument))
     end
   end
 
   class Callbacks
-    def add(callback_name, &block)
-      define_singleton_method(callback_name, &block)
-    end
+    attr_reader :list
 
-    def list
-      @list ||= methods.grep(/_#{VALIDATION_SUFFIX}\Z/).map { |name| send(name) }
+    def add(callback)
+      @list ||= []
+      @list << callback
     end
   end
 
   def valid?
+    # ToDo: We should write test in case of revalidation, but I can't touch test file ;)
+    @errors = []
+
     callbacks = self.class.validation_callbacks.list
     callbacks.each do |validator|
       errors << validator.error_message unless validator.instance_is_valid?(self)
